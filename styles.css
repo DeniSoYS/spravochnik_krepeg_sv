@@ -391,6 +391,8 @@ input:focus-visible {
   margin-right: 12px;
   border: 1.5px solid #b8bab5;
   border-radius: 50%;
+  background: var(--accent);
+  border-color: var(--accent);
 }
 
 .tree-node.depth-0 .node-dot {
@@ -401,6 +403,12 @@ input:focus-visible {
   background: var(--accent);
   border-color: var(--accent);
   box-shadow: 0 0 0 3px rgba(201, 121, 24, 0.08);
+}
+
+.tree-node.is-expanded > .tree-row .node-dot {
+  background: transparent;
+  border-color: var(--accent);
+  box-shadow: none;
 }
 
 .tree-select[aria-current="page"] .node-dot {

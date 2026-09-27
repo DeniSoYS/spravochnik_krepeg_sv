@@ -402,6 +402,8 @@ input:focus-visible {
   margin-right: 12px;
   border: 1.5px solid #b8bab5;
   border-radius: 50%;
+  background: var(--accent);
+  border-color: var(--accent);
 }
 
 .tree-node.depth-0 .node-dot {
@@ -412,6 +414,12 @@ input:focus-visible {
   background: var(--accent);
   border-color: var(--accent);
   box-shadow: 0 0 0 3px rgba(201, 121, 24, 0.08);
+}
+
+.tree-node.is-expanded > .tree-row .node-dot {
+  background: transparent;
+  border-color: var(--accent);
+  box-shadow: none;
 }
 
 .tree-select[aria-current="page"] .node-dot {
@@ -1111,7 +1119,6 @@ input:focus-visible {
           </button>
 
           <div class="header-title">
-            <p>Крепеж СВ</p>
             <h1>Все группы</h1>
           </div>
 
@@ -1177,7 +1184,6 @@ input:focus-visible {
         <aside class="groups-panel" id="groupsPanel" aria-label="Группы каталога">
           <div class="mobile-panel-header">
             <div>
-              <p>Крепеж СВ</p>
               <strong>Все группы</strong>
             </div>
             <button class="icon-button" id="sidebarClose" type="button" aria-label="Закрыть группы каталога">
@@ -3490,7 +3496,7 @@ function buildTreeNode(node, depth, query) {
   selectButton.setAttribute("aria-current", node.id === state.selectedId ? "page" : "false");
 
   const dot = document.createElement("span");
-  dot.className = "node-dot";
+  dot.className = `node-dot${isExpanded ? " is-open" : ""}`;
   dot.setAttribute("aria-hidden", "true");
 
   const label = document.createElement("span");
@@ -3587,8 +3593,17 @@ function renderSelectedCategory() {
   renderProducts(selected.node);
 }
 
+function collectCategoryProducts(node) {
+  return [
+    ...(node.products || []),
+    ...(node.children || []).flatMap(collectCategoryProducts),
+  ];
+}
+
 function renderProducts(node) {
-  const products = node.products || [];
+  const products = node.id === "hardware"
+    ? collectCategoryProducts(node).sort((a, b) => a.name.localeCompare(b.name, "ru", { sensitivity: "base", numeric: true }))
+    : node.products || [];
   searchSummaryElement.hidden = true;
   searchSummaryElement.textContent = "";
 
@@ -3691,6 +3706,15 @@ function renderSearchResults() {
 }
 
 function selectCategory(id) {
+  const selected = findNodeAndPath(catalogGroups, id)?.node;
+  if (selected?.children?.length) {
+    if (state.expandedIds.has(id)) {
+      state.expandedIds.delete(id);
+    } else {
+      state.expandedIds.add(id);
+    }
+  }
+
   state.selectedId = id;
   renderSelectedCategory();
   renderTree();

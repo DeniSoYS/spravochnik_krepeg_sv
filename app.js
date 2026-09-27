@@ -2161,7 +2161,7 @@ function buildTreeNode(node, depth, query) {
   selectButton.setAttribute("aria-current", node.id === state.selectedId ? "page" : "false");
 
   const dot = document.createElement("span");
-  dot.className = "node-dot";
+  dot.className = `node-dot${isExpanded ? " is-open" : ""}`;
   dot.setAttribute("aria-hidden", "true");
 
   const label = document.createElement("span");
@@ -2258,8 +2258,17 @@ function renderSelectedCategory() {
   renderProducts(selected.node);
 }
 
+function collectCategoryProducts(node) {
+  return [
+    ...(node.products || []),
+    ...(node.children || []).flatMap(collectCategoryProducts),
+  ];
+}
+
 function renderProducts(node) {
-  const products = node.products || [];
+  const products = node.id === "hardware"
+    ? collectCategoryProducts(node).sort((a, b) => a.name.localeCompare(b.name, "ru", { sensitivity: "base", numeric: true }))
+    : node.products || [];
   searchSummaryElement.hidden = true;
   searchSummaryElement.textContent = "";
 
@@ -2362,6 +2371,15 @@ function renderSearchResults() {
 }
 
 function selectCategory(id) {
+  const selected = findNodeAndPath(catalogGroups, id)?.node;
+  if (selected?.children?.length) {
+    if (state.expandedIds.has(id)) {
+      state.expandedIds.delete(id);
+    } else {
+      state.expandedIds.add(id);
+    }
+  }
+
   state.selectedId = id;
   renderSelectedCategory();
   renderTree();
