@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Личный справочник ассортимента компании Крепеж СВ."
+    />
+    <title>Крепеж СВ — справочник ассортимента</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="catalog-app" id="catalog">
+      <header class="app-header">
+        <section class="groups-header" aria-label="Навигация по группам">
+          <button
+            class="icon-button mobile-menu-button"
+            id="sidebarToggle"
+            type="button"
+            aria-label="Открыть группы каталога"
+            aria-controls="groupsPanel"
+            aria-expanded="false"
+          >
+            <svg class="icon" aria-hidden="true"><use href="#icon-menu"></use></svg>
+          </button>
+
+          <div class="header-title">
+            <p>Крепеж СВ</p>
+            <h1>Все группы</h1>
+          </div>
+
+          <div class="group-actions" aria-label="Действия с деревом групп">
+            <button
+              class="icon-button"
+              id="expandAll"
+              type="button"
+              aria-label="Развернуть все папки"
+              title="Развернуть все папки"
+            >
+              <svg class="icon" aria-hidden="true"><use href="#icon-expand"></use></svg>
+            </button>
+            <button
+              class="icon-button"
+              id="collapseAll"
+              type="button"
+              aria-label="Свернуть все папки"
+              title="Свернуть все папки"
+            >
+              <svg class="icon" aria-hidden="true"><use href="#icon-collapse"></use></svg>
+            </button>
+          </div>
+        </section>
+
+        <section class="catalog-controls" aria-label="Поиск и представление каталога">
+          <div class="filter-actions">
+            <button class="icon-button" type="button" aria-label="Очистить фильтры" title="Очистить фильтры">
+              <svg class="icon" aria-hidden="true"><use href="#icon-filter-off"></use></svg>
+            </button>
+            <button class="icon-button" type="button" aria-label="Настроить фильтры" title="Настроить фильтры">
+              <svg class="icon" aria-hidden="true"><use href="#icon-filter"></use></svg>
+            </button>
+          </div>
+
+          <label class="search-field" for="catalogSearch">
+            <svg class="icon" aria-hidden="true"><use href="#icon-search"></use></svg>
+            <span class="visually-hidden">Поиск по группам</span>
+            <input
+              id="catalogSearch"
+              type="search"
+              autocomplete="off"
+              placeholder="Поиск по названию или артикулу"
+            />
+            <button class="clear-search" id="clearSearch" type="button" aria-label="Очистить поиск" hidden>
+              <svg class="icon" aria-hidden="true"><use href="#icon-close"></use></svg>
+            </button>
+          </label>
+
+          <div class="view-actions" aria-label="Вид каталога">
+            <button class="view-button is-active" type="button" aria-pressed="true" title="Список">
+              <svg class="icon" aria-hidden="true"><use href="#icon-list"></use></svg>
+            </button>
+            <button class="view-button" type="button" aria-pressed="false" title="Плитка">
+              <svg class="icon" aria-hidden="true"><use href="#icon-grid"></use></svg>
+            </button>
+          </div>
+        </section>
+      </header>
+
+      <div class="catalog-body">
+        <aside class="groups-panel" id="groupsPanel" aria-label="Группы каталога">
+          <div class="mobile-panel-header">
+            <div>
+              <p>Крепеж СВ</p>
+              <strong>Все группы</strong>
+            </div>
+            <button class="icon-button" id="sidebarClose" type="button" aria-label="Закрыть группы каталога">
+              <svg class="icon" aria-hidden="true"><use href="#icon-close"></use></svg>
+            </button>
+          </div>
+
+          <nav class="catalog-tree-nav" aria-label="Структура каталога">
+            <p class="tree-empty" id="treeEmpty" hidden>Группы по такому запросу не найдены.</p>
+            <ul class="catalog-tree" id="catalogTree"></ul>
+          </nav>
+        </aside>
+
+        <button class="sidebar-scrim" id="sidebarScrim" type="button" aria-label="Закрыть меню групп"></button>
+
+        <section class="catalog-content" aria-labelledby="categoryTitle">
+          <header class="category-header">
+            <div class="breadcrumbs" id="breadcrumbs" aria-label="Путь к текущей папке"></div>
+          </header>
+
+          <div class="empty-stage" id="catalogStage">
+            <section class="empty-card" id="emptyCard" aria-live="polite">
+              <div class="empty-icon" aria-hidden="true">
+                <svg class="icon"><use href="#icon-folder-open"></use></svg>
+              </div>
+              <p class="empty-card-label">Выбрана папка</p>
+              <h2 id="categoryTitle">Метизы</h2>
+              <p id="categoryDescription">
+                Здесь пока нет позиций. Позже в этой папке появятся фотографии, названия, артикулы и характеристики товаров.
+              </p>
+            </section>
+
+            <section class="products-panel" id="productsPanel" aria-live="polite" hidden>
+              <div class="products-list" id="productsList"></div>
+              <p class="products-empty" id="productsEmpty" hidden>По этому запросу позиций не найдено.</p>
+            </section>
+          </div>
+        </section>
+      </div>
+
+      <nav class="bottom-nav" aria-label="Основные разделы">
+        <a class="bottom-nav-link" href="#catalog">
+          <svg class="icon" aria-hidden="true"><use href="#icon-home"></use></svg>
+          <span>Старт</span>
+        </a>
+        <a class="bottom-nav-link is-active" href="#catalog" aria-current="page">
+          <svg class="icon" aria-hidden="true"><use href="#icon-catalog"></use></svg>
+          <span>Каталог</span>
+        </a>
+        <a class="bottom-nav-link" href="#catalog">
+          <svg class="icon" aria-hidden="true"><use href="#icon-route"></use></svg>
+          <span>Маршрут</span>
+        </a>
+        <a class="bottom-nav-link" href="#catalog">
+          <svg class="icon" aria-hidden="true"><use href="#icon-document"></use></svg>
+          <span>Документы</span>
+        </a>
+        <a class="bottom-nav-link" href="#catalog">
+          <svg class="icon" aria-hidden="true"><use href="#icon-sync"></use></svg>
+          <span>Обмен</span>
+        </a>
+        <a class="bottom-nav-link" href="#catalog">
+          <svg class="icon" aria-hidden="true"><use href="#icon-settings"></use></svg>
+          <span>Настройки</span>
+        </a>
+      </nav>
+    </main>
+
+    <svg class="svg-sprite" aria-hidden="true" focusable="false">
+      <symbol id="icon-menu" viewBox="0 0 24 24">
+        <path d="M4 7h16M4 12h16M4 17h16" />
+      </symbol>
+      <symbol id="icon-expand" viewBox="0 0 24 24">
+        <path d="M5 5h5v5M19 5h-5v5M5 19h5v-5M19 19h-5v-5" />
+        <path d="m10 10-5-5m9 5 5-5m-9 4-5 5m9-5 5 5" />
+      </symbol>
+      <symbol id="icon-collapse" viewBox="0 0 24 24">
+        <path d="M5 5h5v5M19 5h-5v5M5 19h5v-5M19 19h-5v-5" />
+        <path d="m5 10 5-5m9 5-5-5M5 14l5 5m9-5-5 5" />
+      </symbol>
+      <symbol id="icon-filter-off" viewBox="0 0 24 24">
+        <path d="M4 5h16l-6.4 7.2v5.2l-3.2 1.6v-6.8z" />
+        <path d="m4 20 16-16" />
+      </symbol>
+      <symbol id="icon-filter" viewBox="0 0 24 24">
+        <path d="M4 5h16l-6.4 7.2v5.2l-3.2 1.6v-6.8z" />
+        <path d="M18 17h4M20 15v4" />
+      </symbol>
+      <symbol id="icon-search" viewBox="0 0 24 24">
+        <circle cx="10.8" cy="10.8" r="5.8" />
+        <path d="m15.2 15.2 4.3 4.3" />
+      </symbol>
+      <symbol id="icon-close" viewBox="0 0 24 24">
+        <path d="m6 6 12 12M18 6 6 18" />
+      </symbol>
+      <symbol id="icon-list" viewBox="0 0 24 24">
+        <path d="M8 6h12M8 12h12M8 18h12" />
+        <circle cx="4" cy="6" r=".8" fill="currentColor" stroke="none" />
+        <circle cx="4" cy="12" r=".8" fill="currentColor" stroke="none" />
+        <circle cx="4" cy="18" r=".8" fill="currentColor" stroke="none" />
+      </symbol>
+      <symbol id="icon-grid" viewBox="0 0 24 24">
+        <rect x="4" y="4" width="5" height="5" rx=".6" />
+        <rect x="15" y="4" width="5" height="5" rx=".6" />
+        <rect x="4" y="15" width="5" height="5" rx=".6" />
+        <rect x="15" y="15" width="5" height="5" rx=".6" />
+      </symbol>
+      <symbol id="icon-chevron" viewBox="0 0 24 24">
+        <path d="m9 6 6 6-6 6" />
+      </symbol>
+      <symbol id="icon-folder-open" viewBox="0 0 24 24">
+        <path d="M3.5 7.5h6l1.8 2.2h8.2a1 1 0 0 1 1 1.2l-1.4 7.1a1.4 1.4 0 0 1-1.4 1.1H5.3a1.4 1.4 0 0 1-1.4-1.7l1.1-7.8a2.5 2.5 0 0 1 2.5-2.1Z" />
+        <path d="M4.5 11.2h16" />
+      </symbol>
+      <symbol id="icon-wire" viewBox="0 0 24 24">
+        <ellipse cx="12" cy="12" rx="7.5" ry="5.8" />
+        <ellipse cx="12" cy="12" rx="3" ry="2.4" />
+        <path d="M4.5 12v5.1c0 3.2 15 3.2 15 0V12M9 12v5.8M15 12v5.8" />
+      </symbol>
+      <symbol id="icon-home" viewBox="0 0 24 24">
+        <path d="m3.5 10.5 8.5-7 8.5 7v9h-6v-5h-5v5h-6z" />
+      </symbol>
+      <symbol id="icon-catalog" viewBox="0 0 24 24">
+        <path d="M5.5 7.5h13v12h-13z" />
+        <path d="M8 7.5V5a4 4 0 0 1 8 0v2.5" />
+      </symbol>
+      <symbol id="icon-route" viewBox="0 0 24 24">
+        <circle cx="7" cy="17" r="2.5" />
+        <path d="M8.5 15c3.3-2.1 5.8-4.1 5.8-6.6A3.3 3.3 0 0 0 11 5a3.3 3.3 0 0 0-3.2 4.1" />
+        <path d="M15.5 8.2h4m-2-2v4" />
+      </symbol>
+      <symbol id="icon-document" viewBox="0 0 24 24">
+        <path d="M6 3.5h8l4 4v13H6z" />
+        <path d="M14 3.5v4h4M8.5 12h7M8.5 15.5h7" />
+      </symbol>
+      <symbol id="icon-sync" viewBox="0 0 24 24">
+        <path d="M19 9a7.5 7.5 0 0 0-13-2.5L4 8.5" />
+        <path d="M4 4.5v4h4" />
+        <path d="M5 15a7.5 7.5 0 0 0 13 2.5l2-2" />
+        <path d="M20 19.5v-4h-4" />
+      </symbol>
+      <symbol id="icon-settings" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="3" />
+        <path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1-2.3 2.3-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5v.2h-3.2v-.2a1.7 1.7 0 0 0-1-1.5 1.7 1.7 0 0 0-1.9.3l-.1.1L6 17l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1h-.2v-3.2h.2a1.7 1.7 0 0 0 1.5-1 1.7 1.7 0 0 0-.3-1.9L6 7.8 8.3 5.5l.1.1a1.7 1.7 0 0 0 1.9.3 1.7 1.7 0 0 0 1-1.5v-.2h3.2v.2a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1 2.3 2.3-.1.1a1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.5 1h.2V14h-.2a1.7 1.7 0 0 0-1.5 1Z" />
+      </symbol>
+    </svg>
+
+    <script src="app.js"></script>
+  </body>
+</html>
