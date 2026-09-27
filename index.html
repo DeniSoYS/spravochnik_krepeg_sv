@@ -64,12 +64,13 @@
 
           <label class="search-field" for="catalogSearch">
             <svg class="icon" aria-hidden="true"><use href="#icon-search"></use></svg>
-            <span class="visually-hidden">Поиск по группам</span>
+            <span class="visually-hidden">Поиск по всем товарам каталога</span>
             <input
               id="catalogSearch"
               type="search"
               autocomplete="off"
-              placeholder="Поиск по названию или артикулу"
+              enterkeyhint="search"
+              placeholder="Поиск по всем товарам и артикулам"
             />
             <button class="clear-search" id="clearSearch" type="button" aria-label="Очистить поиск" hidden>
               <svg class="icon" aria-hidden="true"><use href="#icon-close"></use></svg>
@@ -100,7 +101,7 @@
           </div>
 
           <nav class="catalog-tree-nav" aria-label="Структура каталога">
-            <p class="tree-empty" id="treeEmpty" hidden>Группы по такому запросу не найдены.</p>
+            <p class="tree-empty" id="treeEmpty" hidden>Совпадений в каталоге не найдено.</p>
             <ul class="catalog-tree" id="catalogTree"></ul>
           </nav>
         </aside>
@@ -125,6 +126,7 @@
             </section>
 
             <section class="products-panel" id="productsPanel" aria-live="polite" hidden>
+              <p class="search-summary" id="searchSummary" hidden></p>
               <div class="products-list" id="productsList"></div>
               <p class="products-empty" id="productsEmpty" hidden>По этому запросу позиций не найдено.</p>
             </section>

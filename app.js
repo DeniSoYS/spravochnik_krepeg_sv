@@ -1860,17 +1860,247 @@ const emptyCardElement = document.querySelector("#emptyCard");
 const productsPanelElement = document.querySelector("#productsPanel");
 const productsListElement = document.querySelector("#productsList");
 const productsEmptyElement = document.querySelector("#productsEmpty");
+const searchSummaryElement = document.querySelector("#searchSummary");
 const sidebarToggleButton = document.querySelector("#sidebarToggle");
 const sidebarCloseButton = document.querySelector("#sidebarClose");
 const sidebarScrim = document.querySelector("#sidebarScrim");
 
 const state = {
-  selectedId: "wire",
-  expandedIds: new Set(["hardware"]),
+  selectedId: "hardware",
+  expandedIds: new Set(),
+  searchQuery: null,
+  searchResults: [],
+  matchingNodeIds: new Set(),
+};
+
+const MAX_SEARCH_RESULTS = 200;
+const englishToRussianKeyboard = {
+  q: "й", w: "ц", e: "у", r: "к", t: "е", y: "н", u: "г", i: "ш", o: "щ", p: "з", "[": "х", "]": "ъ",
+  a: "ф", s: "ы", d: "в", f: "а", g: "п", h: "р", j: "о", k: "л", l: "д", ";": "ж", "'": "э",
+  z: "я", x: "ч", c: "с", v: "м", b: "и", n: "т", m: "ь", ",": "б", ".": "ю", "/": ".", "`": "ё",
+};
+const russianToEnglishKeyboard = Object.fromEntries(
+  Object.entries(englishToRussianKeyboard).map(([english, russian]) => [russian, english]),
+);
+const searchAliases = {
+  anchor: "анкер",
+  anchors: "анкер",
+  bolt: "болт",
+  bolts: "болт",
+  dowel: "дюбель",
+  dowels: "дюбель",
+  nail: "гвоздь",
+  nails: "гвоздь",
+  nut: "гайка",
+  nuts: "гайка",
+  rivet: "заклепка",
+  rivets: "заклепка",
+  screw: "винт",
+  screws: "винт",
+  washer: "шайба",
+  washers: "шайба",
 };
 
 function normalizeText(value) {
-  return value.trim().toLocaleLowerCase("ru-RU");
+  return String(value || "").trim().toLocaleLowerCase("ru-RU").replace(/ё/gu, "е");
+}
+
+function normalizeSearchText(value) {
+  return normalizeText(value)
+    .replace(/(\d)\s*[хx×*]\s*(\d)/gu, "$1x$2")
+    .replace(/[–—−]/gu, "-")
+    .replace(/,/gu, ".")
+    .replace(/[^a-zа-я0-9.]+/gu, " ")
+    .replace(/\s+/gu, " ")
+    .trim();
+}
+
+function toSearchCompact(value) {
+  return value.replace(/[^a-zа-я0-9]/gu, "");
+}
+
+function getSearchWords(value) {
+  return value.split(" ").map(toSearchCompact).filter(Boolean);
+}
+
+function switchKeyboardLayout(value, keyboard) {
+  return [...value].map((character) => keyboard[character] || character).join("");
+}
+
+function applySearchAliases(value) {
+  return value.split(" ").map((word) => searchAliases[word] || word).join(" ");
+}
+
+function createSearchQuery(value) {
+  const source = normalizeText(value);
+  const variants = [
+    source,
+    switchKeyboardLayout(source, englishToRussianKeyboard),
+    switchKeyboardLayout(source, russianToEnglishKeyboard),
+  ]
+    .map(normalizeSearchText)
+    .map(applySearchAliases)
+    .filter(Boolean)
+    .filter((variant, index, allVariants) => allVariants.indexOf(variant) === index)
+    .map((text) => ({ text, compact: toSearchCompact(text), terms: getSearchWords(text) }));
+
+  return variants.length ? { raw: value.trim(), variants } : null;
+}
+
+function createSearchFields(name, article, pathText) {
+  const nameText = normalizeSearchText(name);
+  const articleText = normalizeSearchText(article);
+  const pathSearchText = normalizeSearchText(pathText);
+  const combinedText = [nameText, articleText, pathSearchText].filter(Boolean).join(" ");
+
+  return {
+    nameKey: toSearchCompact(nameText),
+    articleKey: toSearchCompact(articleText),
+    pathKey: toSearchCompact(pathSearchText),
+    combinedKey: toSearchCompact(combinedText),
+    searchWords: [...new Set(getSearchWords(`${nameText} ${pathSearchText}`))],
+  };
+}
+
+function buildCatalogSearchIndex(nodes, parentPath = []) {
+  const products = [];
+  const categories = [];
+
+  nodes.forEach((node) => {
+    const path = [...parentPath, node];
+    const pathText = path.map((pathNode) => `${pathNode.name} ${pathNode.englishName || ""}`).join(" ");
+
+    categories.push({ node, path, ...createSearchFields(node.name, "", pathText) });
+
+    node.products?.forEach((product) => {
+      products.push({
+        product,
+        node,
+        path,
+        pathLabel: path.map((pathNode) => pathNode.name).join(" › "),
+        ...createSearchFields(product.name, product.article, pathText),
+      });
+    });
+
+    if (node.children) {
+      const nestedIndex = buildCatalogSearchIndex(node.children, path);
+      products.push(...nestedIndex.products);
+      categories.push(...nestedIndex.categories);
+    }
+  });
+
+  return { products, categories };
+}
+
+function isFuzzySearchMatch(word, term) {
+  if (!/^[a-zа-я]+$/u.test(term) || !/^[a-zа-я]+$/u.test(word) || term.length < 4 || word[0] !== term[0]) {
+    return false;
+  }
+
+  const maximumDistance = term.length > 7 ? 2 : 1;
+  if (Math.abs(word.length - term.length) > maximumDistance) {
+    return false;
+  }
+
+  let previousRow = Array.from({ length: word.length + 1 }, (_, index) => index);
+
+  for (let termIndex = 1; termIndex <= term.length; termIndex += 1) {
+    const currentRow = [termIndex];
+    let smallestDistance = currentRow[0];
+
+    for (let wordIndex = 1; wordIndex <= word.length; wordIndex += 1) {
+      const distance = term[termIndex - 1] === word[wordIndex - 1]
+        ? previousRow[wordIndex - 1]
+        : Math.min(previousRow[wordIndex - 1], previousRow[wordIndex], currentRow[wordIndex - 1]) + 1;
+
+      currentRow.push(distance);
+      smallestDistance = Math.min(smallestDistance, distance);
+    }
+
+    if (smallestDistance > maximumDistance) {
+      return false;
+    }
+
+    previousRow = currentRow;
+  }
+
+  return previousRow[word.length] <= maximumDistance;
+}
+
+function scoreSearchTerm(entry, term) {
+  if (entry.articleKey === term) return 1200;
+  if (entry.articleKey.startsWith(term)) return 950;
+  if (entry.nameKey === term) return 850;
+  if (entry.nameKey.startsWith(term)) return 650;
+  if (entry.articleKey.includes(term)) return 600;
+  if (entry.nameKey.includes(term)) return 340;
+  if (entry.pathKey.includes(term)) return 150;
+  if (entry.combinedKey.includes(term)) return 100;
+  if (entry.searchWords.some((word) => isFuzzySearchMatch(word, term))) return 60;
+
+  return 0;
+}
+
+function scoreSearchEntry(entry, variant) {
+  let score = 0;
+
+  for (const term of variant.terms) {
+    const termScore = scoreSearchTerm(entry, term);
+    if (!termScore) {
+      return 0;
+    }
+
+    score += termScore;
+  }
+
+  if (!score) {
+    return 0;
+  }
+
+  if (entry.articleKey === variant.compact) return score + 2200;
+  if (entry.nameKey === variant.compact) return score + 1700;
+  if (entry.articleKey.startsWith(variant.compact)) return score + 1100;
+  if (entry.nameKey.startsWith(variant.compact)) return score + 850;
+  if (entry.combinedKey.includes(variant.compact)) return score + 300;
+
+  return score;
+}
+
+function getSearchScore(entry, query) {
+  return Math.max(...query.variants.map((variant) => scoreSearchEntry(entry, variant)));
+}
+
+const catalogSearchIndex = buildCatalogSearchIndex(catalogGroups);
+
+function refreshSearchState() {
+  const query = createSearchQuery(searchElement.value);
+
+  if (!query) {
+    state.searchQuery = null;
+    state.searchResults = [];
+    state.matchingNodeIds = new Set();
+    return;
+  }
+
+  const matchingNodeIds = new Set();
+  const results = catalogSearchIndex.products
+    .map((entry) => ({ entry, score: getSearchScore(entry, query) }))
+    .filter(({ score }) => score > 0)
+    .sort((first, second) => second.score - first.score || first.entry.product.name.localeCompare(second.entry.product.name, "ru"));
+
+  results.forEach(({ entry }) => {
+    entry.path.forEach((pathNode) => matchingNodeIds.add(pathNode.id));
+  });
+
+  catalogSearchIndex.categories.forEach((entry) => {
+    if (getSearchScore(entry, query) > 0) {
+      entry.path.forEach((pathNode) => matchingNodeIds.add(pathNode.id));
+    }
+  });
+
+  state.searchQuery = query;
+  state.searchResults = results.map(({ entry }) => entry);
+  state.matchingNodeIds = matchingNodeIds;
 }
 
 function findNodeAndPath(nodes, id, parentPath = []) {
@@ -1892,21 +2122,8 @@ function findNodeAndPath(nodes, id, parentPath = []) {
   return null;
 }
 
-function nodeMatchesSearch(node, query) {
-  if (!query) {
-    return true;
-  }
-
-  return (
-    normalizeText(node.name).includes(query) ||
-    (node.englishName && normalizeText(node.englishName).includes(query)) ||
-    node.products?.some((product) => productMatchesSearch(product, query)) ||
-    node.children?.some((child) => nodeMatchesSearch(child, query))
-  );
-}
-
-function productMatchesSearch(product, query) {
-  return normalizeText(product.name).includes(query) || normalizeText(product.article).includes(query);
+function nodeMatchesSearch(node) {
+  return !state.searchQuery || state.matchingNodeIds.has(node.id);
 }
 
 function createIcon(iconId) {
@@ -1922,7 +2139,7 @@ function createIcon(iconId) {
 }
 
 function buildTreeNode(node, depth, query) {
-  if (!nodeMatchesSearch(node, query)) {
+  if (!nodeMatchesSearch(node)) {
     return null;
   }
 
@@ -1985,12 +2202,12 @@ function buildTreeNode(node, depth, query) {
 }
 
 function renderTree() {
-  const query = normalizeText(searchElement.value);
+  const hasSearch = Boolean(state.searchQuery);
   const fragment = document.createDocumentFragment();
   let visibleGroups = 0;
 
   catalogGroups.forEach((group) => {
-    const groupNode = buildTreeNode(group, 0, query);
+    const groupNode = buildTreeNode(group, 0, hasSearch);
     if (groupNode) {
       visibleGroups += 1;
       fragment.append(groupNode);
@@ -1999,7 +2216,7 @@ function renderTree() {
 
   treeElement.replaceChildren(fragment);
   treeEmptyElement.hidden = visibleGroups !== 0;
-  clearSearchButton.hidden = searchElement.value.length === 0;
+  clearSearchButton.hidden = searchElement.value.trim().length === 0;
 }
 
 function renderBreadcrumbs(path) {
@@ -2025,6 +2242,11 @@ function renderBreadcrumbs(path) {
 }
 
 function renderSelectedCategory() {
+  if (state.searchQuery) {
+    renderSearchResults();
+    return;
+  }
+
   const selected = findNodeAndPath(catalogGroups, state.selectedId);
 
   if (!selected) {
@@ -2038,6 +2260,8 @@ function renderSelectedCategory() {
 
 function renderProducts(node) {
   const products = node.products || [];
+  searchSummaryElement.hidden = true;
+  searchSummaryElement.textContent = "";
 
   if (products.length === 0) {
     catalogStageElement.classList.remove("has-products");
@@ -2046,39 +2270,94 @@ function renderProducts(node) {
     return;
   }
 
-  const query = normalizeText(searchElement.value);
-  const visibleProducts = products.filter((product) => !query || productMatchesSearch(product, query));
-
   catalogStageElement.classList.add("has-products");
   emptyCardElement.hidden = true;
   productsPanelElement.hidden = false;
   productsListElement.replaceChildren();
-  productsEmptyElement.hidden = visibleProducts.length !== 0;
+  productsEmptyElement.hidden = products.length !== 0;
 
-  visibleProducts.forEach((product) => {
-    const row = document.createElement("article");
-    row.className = "product-row";
+  products.forEach((product) => {
+    productsListElement.append(createProductRow(product));
+  });
+}
 
-    const marker = document.createElement("div");
-    marker.className = "product-marker";
-    marker.setAttribute("aria-hidden", "true");
-    marker.append(createIcon("icon-wire"));
+function createProductRow(product, pathLabel = "", categoryId = "") {
+  const row = document.createElement("article");
+  row.className = `product-row${categoryId ? " product-search-result" : ""}`;
 
-    const details = document.createElement("div");
-    details.className = "product-details";
-    const name = document.createElement("p");
-    name.className = "product-name";
-    name.textContent = product.name;
+  if (categoryId) {
+    row.dataset.searchResultCategoryId = categoryId;
+    row.tabIndex = 0;
+    row.setAttribute("role", "button");
+    row.setAttribute("aria-label", `Открыть категорию «${pathLabel}»`);
+  }
 
-    const article = document.createElement("p");
-    article.className = "product-article";
-    const articleLabel = document.createElement("strong");
-    articleLabel.textContent = "Арт.";
-    article.append(articleLabel, ` ${product.article}`);
+  const marker = document.createElement("div");
+  marker.className = "product-marker";
+  marker.setAttribute("aria-hidden", "true");
+  marker.append(createIcon("icon-wire"));
 
-    details.append(name, article);
-    row.append(marker, details);
-    productsListElement.append(row);
+  const details = document.createElement("div");
+  details.className = "product-details";
+  const name = document.createElement("p");
+  name.className = "product-name";
+  name.textContent = product.name;
+
+  const article = document.createElement("p");
+  article.className = "product-article";
+  const articleLabel = document.createElement("strong");
+  articleLabel.textContent = "Арт.";
+  article.append(articleLabel, ` ${product.article}`);
+
+  details.append(name, article);
+
+  if (pathLabel) {
+    const category = document.createElement("p");
+    category.className = "product-category";
+    category.textContent = pathLabel;
+    details.append(category);
+  }
+
+  row.append(marker, details);
+  return row;
+}
+
+function getResultWordForm(count) {
+  const lastTwoDigits = count % 100;
+  const lastDigit = count % 10;
+
+  if (lastTwoDigits >= 11 && lastTwoDigits <= 14) return "позиций";
+  if (lastDigit === 1) return "позиция";
+  if (lastDigit >= 2 && lastDigit <= 4) return "позиции";
+  return "позиций";
+}
+
+function renderSearchResults() {
+  const results = state.searchResults;
+  const shownResults = results.slice(0, MAX_SEARCH_RESULTS);
+
+  categoryTitleElement.textContent = "Поиск";
+  renderBreadcrumbs([]);
+  catalogStageElement.classList.add("has-products");
+  emptyCardElement.hidden = true;
+  productsPanelElement.hidden = false;
+  productsListElement.replaceChildren();
+  searchSummaryElement.hidden = false;
+
+  if (results.length === 0) {
+    searchSummaryElement.textContent = `По запросу «${state.searchQuery.raw}» товары не найдены`;
+    productsEmptyElement.hidden = false;
+    productsEmptyElement.textContent = "Проверьте артикул, размер, раскладку клавиатуры или попробуйте другое слово.";
+    return;
+  }
+
+  const extraResultsText = results.length > MAX_SEARCH_RESULTS ? ` Показаны первые ${MAX_SEARCH_RESULTS}.` : "";
+  searchSummaryElement.textContent = `По всему каталогу найдено: ${results.length} ${getResultWordForm(results.length)}.${extraResultsText}`;
+  productsEmptyElement.hidden = true;
+  productsEmptyElement.textContent = "По этому запросу позиций не найдено.";
+
+  shownResults.forEach((entry) => {
+    productsListElement.append(createProductRow(entry.product, entry.pathLabel, entry.node.id));
   });
 }
 
@@ -2131,13 +2410,40 @@ treeElement.addEventListener("click", (event) => {
   }
 });
 
+productsListElement.addEventListener("click", (event) => {
+  const resultButton = event.target.closest("[data-search-result-category-id]");
+  if (!resultButton) {
+    return;
+  }
+
+  searchElement.value = "";
+  refreshSearchState();
+  selectCategory(resultButton.dataset.searchResultCategoryId);
+});
+
+productsListElement.addEventListener("keydown", (event) => {
+  if (event.key !== "Enter" && event.key !== " ") {
+    return;
+  }
+
+  const resultButton = event.target.closest("[data-search-result-category-id]");
+  if (!resultButton) {
+    return;
+  }
+
+  event.preventDefault();
+  resultButton.click();
+});
+
 searchElement.addEventListener("input", () => {
+  refreshSearchState();
   renderTree();
   renderSelectedCategory();
 });
 
 clearSearchButton.addEventListener("click", () => {
   searchElement.value = "";
+  refreshSearchState();
   renderTree();
   renderSelectedCategory();
   searchElement.focus();
@@ -2178,3 +2484,7 @@ document.addEventListener("keydown", (event) => {
 
 renderSelectedCategory();
 renderTree();
+
+if (window.matchMedia("(max-width: 700px)").matches) {
+  setSidebarOpen(true);
+}
