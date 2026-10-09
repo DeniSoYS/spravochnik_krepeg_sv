@@ -659,14 +659,19 @@ input:focus-visible {
 }
 
 .product-category {
-  overflow: hidden;
-  margin: 4px 0 0;
-  color: #9a774a;
+  display: block;
+  width: fit-content;
+  max-width: 100%;
+  margin: 6px 0 0;
+  padding: 3px 7px;
+  color: #795526;
+  background: #fcf8f2;
+  border: 1px solid #eadfd0;
+  border-radius: 5px;
   font-size: 0.76rem;
   font-weight: 600;
   line-height: 1.25;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
 }
 
 .product-search-result {

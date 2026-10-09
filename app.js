@@ -4250,7 +4250,7 @@ function createProductRow(product, pathLabel = "", categoryId = "") {
   if (pathLabel) {
     const category = document.createElement("p");
     category.className = "product-category";
-    category.textContent = pathLabel;
+    category.textContent = `Категория: ${pathLabel}`;
     details.append(category);
   }
 
