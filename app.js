@@ -3453,11 +3453,13 @@ const catalogGroups = [
   { id: "custom-orders", name: "Заказные позиции" },
   { id: "special-packing", name: "Спец. фасовка" },
   { id: "sale", name: "Распродажа" },
+  { id: "ventilation", name: "Вентиляция", englishName: "Ventilation" },
   {
     id: "tools",
     name: "Инструмент",
     englishName: "Tools",
     children: [
+      { id: "viz-tools", name: "ВИЗ", englishName: "VIZ Tools" },
       { id: "step-ladders", name: "Стремянки", englishName: "Step Ladders" },
       {
         id: "abrasive-tools",
@@ -3603,6 +3605,8 @@ const catalogGroups = [
       { id: "metric-bolt", name: "Метрика - болт", englishName: "Metric Bolts", products: metricBoltProducts },
       { id: "metric-nut", name: "Метрика - гайка", englishName: "Metric Nuts", products: metricNutProducts },
       { id: "metric-washer", name: "Метрика - шайба", englishName: "Metric Washers", products: metricWasherProducts },
+      { id: "high-strength-metric", name: "Метрика высокопрочная", englishName: "High-Strength Metric Fasteners" },
+      { id: "black-metric", name: "Метрика черная", englishName: "Black Metric Fasteners" },
       {
         id: "stainless-fasteners",
         name: "Нержавеющий крепеж",
@@ -3768,6 +3772,21 @@ const catalogGroups = [
   { id: "trade-equipment", name: "Торговое оборудование" },
 ];
 
+function attachReportProducts(nodes) {
+  for (const node of nodes) {
+    const names = reportProductNamesByCategory[node.id];
+    if (names) {
+      node.products = [
+        ...(node.products || []),
+        ...names.map((name) => ({ name, article: "не указан" })),
+      ];
+    }
+    if (node.children) attachReportProducts(node.children);
+  }
+}
+
+attachReportProducts(catalogGroups);
+
 const treeElement = document.querySelector("#catalogTree");
 const treeEmptyElement = document.querySelector("#treeEmpty");
 const searchElement = document.querySelector("#catalogSearch");
@@ -3783,6 +3802,11 @@ const searchSummaryElement = document.querySelector("#searchSummary");
 const sidebarToggleButton = document.querySelector("#sidebarToggle");
 const sidebarCloseButton = document.querySelector("#sidebarClose");
 const sidebarScrim = document.querySelector("#sidebarScrim");
+const pwaPromptToggleButton = document.querySelector("#pwaPromptToggle");
+const pwaPromptElement = document.querySelector("#pwaPrompt");
+const pwaPromptTextElement = document.querySelector("#pwaPromptText");
+const pwaInstallButton = document.querySelector("#pwaInstall");
+const pwaDismissButton = document.querySelector("#pwaDismiss");
 
 const state = {
   selectedId: "hardware",
@@ -4336,6 +4360,73 @@ function collectExpandableIds(nodes, ids = []) {
 function setSidebarOpen(isOpen) {
   document.body.classList.toggle("menu-open", isOpen);
   sidebarToggleButton.setAttribute("aria-expanded", String(isOpen));
+}
+
+const isStandaloneApp = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
+const isIos = /iPad|iPhone|iPod/u.test(window.navigator.userAgent)
+  || (window.navigator.platform === "MacIntel" && window.navigator.maxTouchPoints > 1);
+let deferredInstallPrompt;
+
+function setPwaPromptOpen(isOpen) {
+  pwaPromptElement.hidden = !isOpen;
+  pwaPromptToggleButton.setAttribute("aria-expanded", String(isOpen));
+}
+
+function revealPwaInstall() {
+  if (isStandaloneApp) return;
+  pwaPromptToggleButton.hidden = false;
+}
+
+function configurePwaPrompt() {
+  if (isIos) {
+    pwaPromptTextElement.textContent = "В Safari нажмите «Поделиться», затем выберите «На экран Домой». После добавления каталог будет доступен без интернета.";
+    pwaInstallButton.hidden = true;
+    pwaDismissButton.textContent = "Понятно";
+    return;
+  }
+
+  pwaPromptTextElement.textContent = "Добавьте справочник на устройство, чтобы открывать каталог с домашнего экрана и работать без интернета.";
+  pwaInstallButton.hidden = false;
+  pwaDismissButton.textContent = "Не сейчас";
+}
+
+window.addEventListener("beforeinstallprompt", (event) => {
+  event.preventDefault();
+  deferredInstallPrompt = event;
+  revealPwaInstall();
+});
+
+window.addEventListener("appinstalled", () => {
+  deferredInstallPrompt = undefined;
+  pwaPromptToggleButton.hidden = true;
+  setPwaPromptOpen(false);
+});
+
+pwaPromptToggleButton.addEventListener("click", () => {
+  configurePwaPrompt();
+  setPwaPromptOpen(pwaPromptElement.hidden);
+});
+
+pwaDismissButton.addEventListener("click", () => setPwaPromptOpen(false));
+
+pwaInstallButton.addEventListener("click", async () => {
+  if (!deferredInstallPrompt) return;
+
+  deferredInstallPrompt.prompt();
+  await deferredInstallPrompt.userChoice;
+  deferredInstallPrompt = undefined;
+  pwaPromptToggleButton.hidden = true;
+  setPwaPromptOpen(false);
+});
+
+if (isIos) revealPwaInstall();
+
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("./service-worker.js").catch((error) => {
+      console.warn("Не удалось включить автономный режим каталога.", error);
+    });
+  });
 }
 
 treeElement.addEventListener("click", (event) => {

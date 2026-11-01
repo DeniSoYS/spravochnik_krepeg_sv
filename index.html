@@ -7,8 +7,15 @@
       name="description"
       content="Личный справочник ассортимента компании Крепеж СВ."
     />
+    <meta name="theme-color" content="#c97918" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Крепеж СВ" />
     <title>Крепеж СВ — справочник ассортимента</title>
     <link rel="stylesheet" href="styles.css?v=a16cb2e" />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png" />
   </head>
   <body>
     <main class="catalog-app" id="catalog">
@@ -28,6 +35,19 @@
           <div class="header-title">
             <h1>Все группы</h1>
           </div>
+
+          <button
+            class="install-app-button"
+            id="pwaPromptToggle"
+            type="button"
+            aria-label="Установить справочник на устройство"
+            aria-controls="pwaPrompt"
+            aria-expanded="false"
+            hidden
+          >
+            <svg class="icon" aria-hidden="true"><use href="#icon-download"></use></svg>
+            <span>Установить</span>
+          </button>
 
           <div class="group-actions" aria-label="Действия с деревом групп">
             <button
@@ -160,6 +180,21 @@
       </nav>
     </main>
 
+    <aside class="pwa-prompt" id="pwaPrompt" role="dialog" aria-labelledby="pwaPromptTitle" hidden>
+      <div class="pwa-prompt-icon" aria-hidden="true">
+        <svg class="icon"><use href="#icon-download"></use></svg>
+      </div>
+      <div class="pwa-prompt-content">
+        <p class="pwa-prompt-label">Крепеж СВ</p>
+        <h2 id="pwaPromptTitle">Установите справочник</h2>
+        <p id="pwaPromptText"></p>
+      </div>
+      <div class="pwa-prompt-actions">
+        <button class="pwa-install-action" id="pwaInstall" type="button">Установить</button>
+        <button class="pwa-dismiss-action" id="pwaDismiss" type="button">Не сейчас</button>
+      </div>
+    </aside>
+
     <svg class="svg-sprite" aria-hidden="true" focusable="false">
       <symbol id="icon-menu" viewBox="0 0 24 24">
         <path d="M4 7h16M4 12h16M4 17h16" />
@@ -237,8 +272,14 @@
         <circle cx="12" cy="12" r="3" />
         <path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1-2.3 2.3-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5v.2h-3.2v-.2a1.7 1.7 0 0 0-1-1.5 1.7 1.7 0 0 0-1.9.3l-.1.1L6 17l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1h-.2v-3.2h.2a1.7 1.7 0 0 0 1.5-1 1.7 1.7 0 0 0-.3-1.9L6 7.8 8.3 5.5l.1.1a1.7 1.7 0 0 0 1.9.3 1.7 1.7 0 0 0 1-1.5v-.2h3.2v.2a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1 2.3 2.3-.1.1a1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.5 1h.2V14h-.2a1.7 1.7 0 0 0-1.5 1Z" />
       </symbol>
+      <symbol id="icon-download" viewBox="0 0 24 24">
+        <path d="M12 3.5v10" />
+        <path d="m8 10 4 4 4-4" />
+        <path d="M5 16.5v3h14v-3" />
+      </symbol>
     </svg>
 
-    <script src="app.js?v=a16cb2e"></script>
+    <script src="report-products.js?v=1"></script>
+    <script src="app.js?v=report-import-1"></script>
   </body>
 </html>

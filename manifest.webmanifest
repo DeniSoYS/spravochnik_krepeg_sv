@@ -1,0 +1,26 @@
+{
+  "id": "./",
+  "name": "Крепеж СВ — справочник ассортимента",
+  "short_name": "Крепеж СВ",
+  "description": "Автономный справочник ассортимента компании Крепеж СВ.",
+  "lang": "ru",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f8f8f5",
+  "theme_color": "#c97918",
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

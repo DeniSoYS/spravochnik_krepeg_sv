@@ -164,7 +164,38 @@ input:focus-visible {
 
 .group-actions {
   gap: 2px;
+  margin-left: 0;
+}
+
+.install-app-button {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 6px;
+  height: 34px;
+  padding: 0 10px;
   margin-left: auto;
+  color: var(--accent-deep);
+  background: var(--accent-soft);
+  border: 1px solid rgba(201, 121, 24, 0.18);
+  border-radius: 9px;
+  font-size: 0.77rem;
+  font-weight: 750;
+  transition: color 160ms ease, background-color 160ms ease, transform 160ms ease;
+}
+
+.install-app-button:hover {
+  color: #fff;
+  background: var(--accent);
+}
+
+.install-app-button:active {
+  transform: translateY(1px);
+}
+
+.install-app-button .icon {
+  width: 1.05rem;
+  height: 1.05rem;
 }
 
 .catalog-controls {
@@ -751,6 +782,108 @@ input:focus-visible {
   stroke-width: 2;
 }
 
+.pwa-prompt {
+  position: fixed;
+  z-index: 50;
+  right: max(24px, env(safe-area-inset-right));
+  bottom: max(24px, env(safe-area-inset-bottom));
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0 13px;
+  width: min(420px, calc(100% - 48px));
+  padding: 16px;
+  color: var(--text);
+  background: rgba(255, 255, 253, 0.96);
+  border: 1px solid rgba(201, 121, 24, 0.22);
+  border-radius: 18px;
+  box-shadow: 0 18px 50px rgba(40, 42, 38, 0.22), 0 3px 10px rgba(40, 42, 38, 0.09);
+  backdrop-filter: blur(14px);
+}
+
+.pwa-prompt-icon {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  color: #fff;
+  place-items: center;
+  background: var(--accent);
+  border-radius: 13px;
+  box-shadow: 0 5px 12px rgba(169, 97, 14, 0.25);
+}
+
+.pwa-prompt-icon .icon {
+  width: 1.35rem;
+  height: 1.35rem;
+}
+
+.pwa-prompt-content {
+  min-width: 0;
+}
+
+.pwa-prompt-label {
+  margin: 1px 0 3px;
+  color: var(--accent-deep);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.pwa-prompt h2 {
+  margin: 0;
+  color: #30322f;
+  font-size: 1rem;
+  letter-spacing: -0.01em;
+}
+
+.pwa-prompt-content > p:last-child {
+  margin: 6px 0 0;
+  color: #6f716c;
+  font-size: 0.81rem;
+  line-height: 1.42;
+}
+
+.pwa-prompt-actions {
+  display: flex;
+  grid-column: 2;
+  gap: 8px;
+  margin-top: 13px;
+}
+
+.pwa-install-action,
+.pwa-dismiss-action {
+  min-height: 34px;
+  padding: 0 12px;
+  border-radius: 8px;
+  font-size: 0.78rem;
+  font-weight: 750;
+  transition: background-color 160ms ease, color 160ms ease, transform 160ms ease;
+}
+
+.pwa-install-action {
+  color: #fff;
+  background: var(--accent);
+}
+
+.pwa-install-action:hover {
+  background: var(--accent-deep);
+}
+
+.pwa-dismiss-action {
+  color: #6e706b;
+  background: #efefec;
+}
+
+.pwa-dismiss-action:hover {
+  color: #3c3e3a;
+  background: #e4e4e0;
+}
+
+.pwa-install-action:active,
+.pwa-dismiss-action:active {
+  transform: translateY(1px);
+}
+
 @media (max-width: 1100px) {
   .catalog-app {
     width: min(100% - 28px, 1540px);
@@ -798,6 +931,17 @@ input:focus-visible {
   .group-actions .icon-button {
     width: 31px;
     height: 31px;
+  }
+
+  .install-app-button {
+    display: inline-grid;
+    width: 32px;
+    padding: 0;
+    place-items: center;
+  }
+
+  .install-app-button span {
+    display: none;
   }
 
   .filter-actions .icon-button {
@@ -1057,6 +1201,14 @@ input:focus-visible {
 
   .bottom-nav-link {
     padding: 9px 3px 8px;
+  }
+
+  .pwa-prompt {
+    right: 12px;
+    bottom: calc(70px + max(14px, env(safe-area-inset-bottom)));
+    left: 12px;
+    width: auto;
+    padding: 14px;
   }
 }
 
